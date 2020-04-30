@@ -1,5 +1,5 @@
 import pygame
-from sudoku_solve import solve, possible, print_board
+from sudoku_solver import solve, possible, print_board
 pygame.init()
 
 
@@ -182,20 +182,34 @@ class Cube:
 	def set_temp(self,val):
 		self.temp = val
 
-class interface:
+class Interface:
 
-	def __init__(self):
-		self.strikes = strikes
+	def __init__(self,):
+		self.strikes = 0
 
-	def strike(self):
-		fnt = pygame.font.SysFont('comicsans',40)
+	def title(self,win):
+		fnt = pygame.font.SysFont('comicsans', 60)
+		text = fnt.render('Sudoku', True, white)
+		win.blit(text,(50,50))
+
+	def draw_strike(self,win):
+		fnt = pygame.font.SysFont('comicsans',60)
+		text = fnt.render('X', True, red)
+		for i in range(self.strikes):
+			win.blit(text,(20 + i * (text.get_width() + 20), y_size - text.get_height() - 15))
+
+	def add_strike(self,strike):
+		self.strikes += strike
+
 		
 
 
-def redrawGameWindow(win,board):
+def redrawGameWindow(win, board, UX):
 	win.fill(white)
 	pygame.draw.rect(win,lightBrown,(0,0,x_size/3,y_size-(y_size/7)+6))
 	board.draw(win)
+	UX.draw_strike(win)
+	UX.title(win)
 	pygame.display.update()
 
 
@@ -206,7 +220,7 @@ def run():
 	board.create()
 	running = True
 	key = None
-	strikes = 0
+	UX = Interface()
 	board.update_model()
 	print(board.model)
 	while running:
@@ -258,7 +272,7 @@ def run():
 						if board.place(board.cubes[i][j].temp):
 							print("Sucess")
 						else:
-							strikes += 1
+							UX.add_strike(1)
 							print("Wrong")
 						key = None
 
@@ -273,6 +287,5 @@ def run():
 			board.sketch(key)
 
 		clock.tick(30)
-		redrawGameWindow(win,board)
+		redrawGameWindow(win, board, UX)
 run()
-
