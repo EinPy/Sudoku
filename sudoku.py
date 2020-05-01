@@ -12,6 +12,7 @@ gray = (128,128,128)
 lightGray = (200,200,200)
 black = (0,0,0)
 red = (255,0,0)
+green = (0,128,0)
 
 win = pygame.display.set_mode((x_size,y_size))
 
@@ -41,9 +42,6 @@ class Grid:
 		self.selected = None
 		self.solution = None
 
-	def create_solution(self):
-		pass
-
 	#making
 	def create(self):
 		self.cubes = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
@@ -57,6 +55,12 @@ class Grid:
 			for j in range(self.cols):
 				self.model[i][j] = self.cubes[i][j].value
 
+	def create_solution(self):
+		board = self.grid
+		solve(board)
+		print_board(board)
+		self.solution = board
+
 	def place(self, val):
 		print(self.model)
 		row, col = self.selected
@@ -68,8 +72,8 @@ class Grid:
 			print(f'checking the value {val} in ({row}, {col}) for')
 			print_board(self.model)
 
-			if possible(val, (row,col), self.model) and solve(self.model):
-				print('This happned')
+			if self.solution[row][col] ==  val:
+				print('entered')
 				return True
 			else:
 				self.cubes[row][col].set_val(0)
@@ -129,11 +133,14 @@ class Grid:
 		param: pos
 		return: row, col
 		"""
-		if pos[0] - self.x_start < self.width and pos[1] < self.height:
-			gap = self.width / 9
-			x = (pos[0] - self.x_start ) // gap
-			y = pos[1] // gap
-			return (int(y),int(x))
+		if pos[0] > self.x_start:
+			if pos[0] - self.x_start < self.width and pos[1] < self.height:
+				gap = self.width / 9
+				x = (pos[0] - self.x_start ) // gap
+				y = pos[1] // gap
+				return (int(y),int(x))
+			else:
+				return None
 		else:
 			return None
 
@@ -201,13 +208,52 @@ class Interface:
 	def add_strike(self,strike):
 		self.strikes += strike
 
+
+class Button:
+
+	def __init__(self, x, y, width, height, color, text = ''):
+		self.x = x
+		self.y = y
+		self.width = width
+		self.height = height
+		self.text = text
+		self.color = color
+
+	def draw(self, win, outline = None):
+		#if outline, draw slightly larger rectangle around it
+		if outline:
+			pygame.draw.rect(win, outline, (self.x - 2, self.y - 2,self.width + 4, self.height + 4), 0)
+
+		pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0)
+
+		if self.text != '' :
+			font = pygame.font.SysFont('comicsans', self.height  - 20)
+			text = font.render(self.text, True, lightGray)
+			win.blit(text, (self.x + (self.width /2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
+
+	def is_over(self,pos):
+		#pos is a tuple of (x,y) coordinates of the mouse
+		x, y = pos
+		if x > self.x and x < self.x + self.width:
+			if y > self.y and y < self.y + self.height:
+				return True
+
+		return False
+
+class Visualize:
+
+	def __init__(self):
+		pass
+
+
 		
 
 
-def redrawGameWindow(win, board, UX):
+def redrawGameWindow(win, board, UX, button):
 	win.fill(white)
 	pygame.draw.rect(win,lightBrown,(0,0,x_size/3,y_size-(y_size/7)+6))
 	board.draw(win)
+	button.draw(win)
 	UX.draw_strike(win)
 	UX.title(win)
 	pygame.display.update()
@@ -218,7 +264,9 @@ def redrawGameWindow(win, board, UX):
 def run():
 	board = Grid(x_size/3,500,y_size-(y_size/7),9,9)
 	board.create()
+	board.create_solution()
 	running = True
+	solve_button  = Button(80,150,100,50,gray,'Solve')
 	key = None
 	UX = Interface()
 	board.update_model()
@@ -226,6 +274,7 @@ def run():
 	while running:
 
 		for event in pygame.event.get():
+			pos = pygame.mouse.get_pos()
 			if event.type == pygame.QUIT:
 				running = False
 			if event.type == pygame.KEYDOWN:
@@ -277,15 +326,24 @@ def run():
 						key = None
 
 			if event.type == pygame.MOUSEBUTTONDOWN:
-				pos = pygame.mouse.get_pos()
 				clicked = board.click(pos)
+				if solve_button.is_over(pos):
+					solve_button.color = green
+					print('solve button pressed')
 				if clicked:
 					board.select(clicked[0], clicked[1])
 					key = None
 
+			if event.type == pygame.MOUSEMOTION:
+				if solve_button.is_over(pos):
+					solve_button.color = green
+				else:
+					solve_button.color = gray
+
+
 		if board.selected and key != None:
 			board.sketch(key)
 
-		clock.tick(30)
-		redrawGameWindow(win, board, UX)
+		clock.tick(60)
+		redrawGameWindow(win, board, UX, solve_button)
 run()
