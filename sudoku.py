@@ -13,6 +13,7 @@ lightGray = (200,200,200)
 black = (0,0,0)
 red = (255,0,0)
 green = (0,128,0)
+mediumBlue = (121,158,196)
 
 win = pygame.display.set_mode((x_size,y_size))
 
@@ -41,8 +42,9 @@ class Grid:
 		self.model = None
 		self.selected = None
 		self.solution = None
+		self.solution_model = None
 
-	#making
+
 	def create(self):
 		self.cubes = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 		for i in range(self.rows):
@@ -60,6 +62,17 @@ class Grid:
 		solve(board)
 		print_board(board)
 		self.solution = board
+
+	def show_solution(self):
+		self.solution_model = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+		for i in range(self.rows):
+			for j in range(self.cols):
+				self.cubes[i][j] = Cube(self.x_start, self.solution[i][j], i, j, self.width, self.height)
+		self.update_model()
+
+		for i in range(self.rows):
+			for j in range(self.cols):
+				self.model[i][j] = self.solution[i][j]
 
 	def place(self, val):
 		print(self.model)
@@ -93,8 +106,13 @@ class Grid:
 				thick = 4
 			else:
 				thick = 1
-			pygame.draw.line(win,black,  (self.x_start,i*gap), (self.width + self.x_start,i*gap), thick)
-			pygame.draw.line(win, black, (self.x_start + i*gap,0), (self.x_start + i*gap,self.height), thick)
+			pygame.draw.line(win,black,  (self.x_start,i*gap), (self.width + self.x_start,i*gap), thick) #horisontal 
+			pygame.draw.line(win, black, (self.x_start + i*gap,0), (self.x_start + i*gap,self.height), thick) # vertical
+
+			#drawing the bottom line all the way across the screen
+			if i == 9:
+				pygame.draw.line(win,black, (0,i*gap), (self.width + self.x_start,i*gap), thick)
+
 
 		#drawing the cubes
 		for i in range(self.rows):
@@ -251,7 +269,7 @@ class Visualize:
 
 def redrawGameWindow(win, board, UX, button):
 	win.fill(white)
-	pygame.draw.rect(win,lightBrown,(0,0,x_size/3,y_size-(y_size/7)+6))
+	pygame.draw.rect(win,mediumBlue,(0,0,x_size/3,y_size-(y_size/7)+6))
 	board.draw(win)
 	button.draw(win)
 	UX.draw_strike(win)
@@ -330,6 +348,7 @@ def run():
 				if solve_button.is_over(pos):
 					solve_button.color = green
 					print('solve button pressed')
+					board.show_solution()
 				if clicked:
 					board.select(clicked[0], clicked[1])
 					key = None
