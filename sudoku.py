@@ -1,5 +1,5 @@
 import pygame
-from sudoku_solver import solve, possible, print_board
+from sudoku_solver import solve, possible, print_board, find_empty
 pygame.init()
 
 
@@ -60,33 +60,29 @@ class Grid:
 	def create_solution(self):
 		board = self.grid
 		solve(board)
-		print_board(board)
+#		print_board(board)
 		self.solution = board
 
 	def show_solution(self):
 		self.solution_model = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 		for i in range(self.rows):
 			for j in range(self.cols):
-				self.cubes[i][j] = Cube(self.x_start, self.solution[i][j], i, j, self.width, self.height)
+				self.cubes[i][j].set_val(self.solution[i][j])
 		self.update_model()
 
-		for i in range(self.rows):
-			for j in range(self.cols):
-				self.model[i][j] = self.solution[i][j]
-
 	def place(self, val):
-		print(self.model)
+#		print(self.model)
 		row, col = self.selected
-		print(f'checking position {row}, {col}')
+#		print(f'checking position {row}, {col}')
 		if self.cubes[row][col].value == 0:
 			self.cubes[row][col].set_val(val)
 			self.update_model()
 
-			print(f'checking the value {val} in ({row}, {col}) for')
-			print_board(self.model)
+#			print(f'checking the value {val} in ({row}, {col}) for')
+#			print_board(self.model)
 
 			if self.solution[row][col] ==  val:
-				print('entered')
+#				print('entered')
 				return True
 			else:
 				self.cubes[row][col].set_val(0)
@@ -119,6 +115,11 @@ class Grid:
 			for j in range(self.cols):
 				self.cubes[i][j].draw(win)
 
+	def draw_some(self,win):
+		for i in range(self.rows):
+			for j in range(self.cols):
+				self.cubes[i][j].draw(win)
+
 
 	def select(self,row,col):
 		#reset other cubes from being selected
@@ -132,7 +133,7 @@ class Grid:
 	def move_selected(self,change_row,change_col):
 		row, col = self.selected
 		self.cubes[row][col].selected = False
-		print(f'trying to change from {row},{col} to {row - change_row}, {col - change_col}')
+#		print(f'trying to change from {row},{col} to {row - change_row}, {col - change_col}')
 		if row  - change_row <= 8 and row  - change_row >= 0:
 			row -= change_row
 		if col  + change_col <= 8 and col + change_col >= 0:
@@ -260,18 +261,85 @@ class Button:
 
 class Visualize:
 
-	def __init__(self):
-		pass
+	def __init__(self, bo, win, UX, buttons):
+		self.bo  = bo
+		self.win = win
+		self.UX = UX
+		self.buttons = buttons
+
+	def find_empty(self):
+		for i in range(9):
+			for j in range(9):
+				if self.bo.model[i][j] == 0:
+					return (i,j) #returns a tuple with (row, column)
+		return None #if there are no empty spaces
+
+	def possible(self,n,pos):
+		"""
+		checks if a spot is possible, if possible return True
+		param y: row
+		param pos: (row, column)
+		param bo: board
+		"""
+		y, x = pos
+		self.bo.select(y, x)
+#		print(f'checking the position {pos}')
+		#checking the row
+#		print(f'checking num: {n}')
+		for i in range(9):
+			if self.bo.model[y][i] == n and x != i:
+#				print(f'num: {n} didn\' work')
+				return False
+		#checking the column for the number
+		for i in range(0,9):
+			if self.bo.model[i][x] == n and y != i:
+#				print(f'num: {n} didn\' work')
+				return False
+		#checking if the number exists in the same box
+		x_start = (x // 3) * 3
+		y_start = (y // 3) * 3
+		for i in range(0,3):
+			for j in range(0,3):
+				if self.bo.model[y_start + i][x_start + j] == n and (y_start + i,x_start + j) != pos:
+					print(f'num: {n} didn\' work1')
+					return False
+#		print(f'num: {n} did work')
+		return True  
+
+	def solve(self):
+		#chechking for empty spaces, if there are none, the board is solved
+		find = self.find_empty()
+		if not find:
+			return True
+		else:
+			row, col = find
+
+		for i in range(1,10):
+			if self.possible(i, (row, col)):
+				self.bo.cubes[row][col].set_val(i)
+				self.bo.update_model()
+				redrawGameWindow(self.win, self.bo, self.UX, self.buttons)
+
+				if self.solve():
+					return True # no more empty spaces, the recursion stops
+
+				#if no number worked for the next position, go bakc to the previous position
+				self.bo.cubes[row][col].set_val(0)
+				self.bo.update_model()
+
+				redrawGameWindow(self.win, self.bo, self.UX, self.buttons)
+
+		return False
+
 
 
 		
-
-
-def redrawGameWindow(win, board, UX, button):
+def redrawGameWindow(win, board, UX, buttons):
 	win.fill(white)
 	pygame.draw.rect(win,mediumBlue,(0,0,x_size/3,y_size-(y_size/7)+6))
 	board.draw(win)
-	button.draw(win)
+	for button in buttons:	
+		button.draw(win)
 	UX.draw_strike(win)
 	UX.title(win)
 	pygame.display.update()
@@ -285,10 +353,13 @@ def run():
 	board.create_solution()
 	running = True
 	solve_button  = Button(80,150,100,50,gray,'Solve')
+	vizualize_button   = Button(30,250,200,50,gray,'Visualize Solution')
+	buttons = [solve_button, vizualize_button]
 	key = None
 	UX = Interface()
 	board.update_model()
-	print(board.model)
+#	print(board.model)
+	board.draw(win)
 	while running:
 
 		for event in pygame.event.get():
@@ -349,6 +420,10 @@ def run():
 					solve_button.color = green
 					print('solve button pressed')
 					board.show_solution()
+				if vizualize_button.is_over(pos):
+					print('vizualize_button has been pressd')
+					vis = Visualize(board, win, UX, buttons)
+					vis.solve()
 				if clicked:
 					board.select(clicked[0], clicked[1])
 					key = None
@@ -356,13 +431,16 @@ def run():
 			if event.type == pygame.MOUSEMOTION:
 				if solve_button.is_over(pos):
 					solve_button.color = green
+				elif vizualize_button.is_over(pos):
+					vizualize_button.color = green
 				else:
 					solve_button.color = gray
+					vizualize_button.color = gray
 
 
 		if board.selected and key != None:
 			board.sketch(key)
 
-		clock.tick(60)
-		redrawGameWindow(win, board, UX, solve_button)
+		clock.tick(400)
+		redrawGameWindow(win, board, UX, buttons)
 run()
