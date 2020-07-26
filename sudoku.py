@@ -1,5 +1,8 @@
 import pygame
-from sudoku_solver import solve, possible, print_board, find_empty
+from sudoku_solve import print_board, solve
+from board_generator import createValidGrid, fillGrid, solve_w_count
+import tkinter as tk
+
 pygame.init()
 
 
@@ -22,15 +25,8 @@ pygame.display.set_caption('sudoku')
 clock = pygame.time.Clock()
 
 class Grid:
-	grid = [[5,3,0,0,7,0,0,0,0],
-			[6,0,0,1,9,5,0,0,0],
-			[0,9,8,0,0,0,0,6,0],
-			[8,0,0,0,6,0,0,0,3],
-			[4,0,0,8,0,3,0,0,1],
-			[7,0,0,0,2,0,0,0,6],
-			[0,6,0,0,0,0,2,8,0],
-			[0,0,0,4,1,9,0,0,5],
-			[0,0,0,0,8,0,0,7,9]]
+	grid = createValidGrid(50)
+			
 
 	def __init__(self,x_start,width,height,rows,cols):
 		self.x_start = x_start
@@ -45,6 +41,21 @@ class Grid:
 		self.solution_model = None
 
 
+	
+	def newGrid(self, diff):
+		self.grid = createValidGrid(diff)
+		for row in range(9):
+			for col in range(9):212
+				self.cubes[row][col].set_val(self.grid[row][col])
+		self.update_model()
+		self.create_solution()
+		for i in range(9):
+			for j in range(9):
+				self.cubes[i][j].set_temp(0)
+				self.cubes[i][j].selected = False
+		self.cubes[0][0].selected = True
+		
+	
 	def create(self):
 		self.cubes = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 		for i in range(self.rows):
@@ -57,12 +68,19 @@ class Grid:
 			for j in range(self.cols):
 				self.model[i][j] = self.cubes[i][j].value
 
-	def create_solution(self):
-		board = self.grid
-		solve(board)
-#		print_board(board)
-		self.solution = board
+	def create_solution(self):		
+		self.solution = []
+		for row in range(0,9):
+			self.solution.append([])
+			for col in range(0,9):
+				self.solution[row].append(self.grid[row][col])
+		print('this is the board')
+		print_board(self.solution)
+		solve(self.solution)
+		print('this is the solved version')
+		print_board(self.solution)
 
+		
 	def show_solution(self):
 		self.solution_model = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 		for i in range(self.rows):
@@ -85,6 +103,7 @@ class Grid:
 #				print('entered')
 				return True
 			else:
+				print('the entered value did not match solution')
 				self.cubes[row][col].set_val(0)
 				self.cubes[row][col].set_temp(0)
 				self.update_model()
@@ -226,6 +245,70 @@ class Interface:
 
 	def add_strike(self,strike):
 		self.strikes += strike
+	
+	def select_diff(self, board):
+		root = tk.Tk()
+		root.title('Selecting difficulty')
+		root.geometry('400x400')
+
+
+		title = tk.Label(root,
+							text = "Please Select Difficulty",
+							fg = "blue",
+							font = "Verdana 20 bold")				
+		title.place(relx = 0.5,
+					rely = 0.1,
+					anchor = 'center')
+
+		difficulty1 = tk.Label(root,
+								text = "Easy",
+								font = "Times 20")						
+		difficulty1.place(relx = 0.08,
+						  rely = 0.39)
+								  
+		difficulty2 = tk.Label(root,
+								text = "Medium",
+								font = "Times 20")
+		difficulty2.place(relx = 0.5,
+						  rely = 1/3,
+						  anchor = "center")
+
+		difficulty3 = tk.Label(root,
+								text = "Hard",
+								font = "Times 20")
+		difficulty3.place(relx = 0.8,
+						  rely = 0.39)
+					
+		horizontal = tk.Scale(root, 
+								from_ = 0, 
+								to = 100, 
+								orient = tk.HORIZONTAL, 
+								length = 200)
+		horizontal.place(relx = 0.5,
+						 rely = 0.4,
+						 anchor = "center")
+		horizontal.set(50)
+
+
+		def select_diffculty():
+			diff = horizontal.get()
+			diff = int(((diff + 20) / 2) * 1.3)
+			print(f'the attempts will be {diff}')
+			board.newGrid(diff)
+			root.destroy()
+
+
+		enter = tk.Button(root, 
+							text = 'Enter', 
+							command = select_diffculty,
+							activebackground = "#33A532",
+							font = "Verdana 20 bold",
+							fg = "gray")
+		enter.place(relx = 0.5,
+					rely = 0.6,
+					anchor = "center")
+
+		root.mainloop()
 
 
 class Button:
@@ -301,7 +384,7 @@ class Visualize:
 		for i in range(0,3):
 			for j in range(0,3):
 				if self.bo.model[y_start + i][x_start + j] == n and (y_start + i,x_start + j) != pos:
-					print(f'num: {n} didn\' work1')
+#					print(f"num: {n} didn\' work1")
 					return False
 #		print(f'num: {n} did work')
 		return True  
@@ -352,9 +435,10 @@ def run():
 	board.create()
 	board.create_solution()
 	running = True
-	solve_button  = Button(80,150,100,50,gray,'Solve')
-	vizualize_button   = Button(30,250,200,50,gray,'Visualize Solution')
-	buttons = [solve_button, vizualize_button]
+	new_board = Button(50,150,150,50,gray,'New Board')
+	solve_button  = Button(80,250,100,50,gray,'Solve')
+	vizualize_button   = Button(30,350,200,50,gray,'Visualize Solution')
+	buttons = [solve_button, vizualize_button, new_board]
 	key = None
 	UX = Interface()
 	board.update_model()
@@ -422,8 +506,13 @@ def run():
 					board.show_solution()
 				if vizualize_button.is_over(pos):
 					print('vizualize_button has been pressd')
+					vizualize_button.color = green
 					vis = Visualize(board, win, UX, buttons)
 					vis.solve()
+				if new_board.is_over(pos):
+					print('new board button has been pressed')
+					new_board.color = green
+					UX.select_diff(board)
 				if clicked:
 					board.select(clicked[0], clicked[1])
 					key = None
@@ -433,9 +522,11 @@ def run():
 					solve_button.color = green
 				elif vizualize_button.is_over(pos):
 					vizualize_button.color = green
+				elif new_board.is_over(pos):
+					new_board.color = green
 				else:
-					solve_button.color = gray
-					vizualize_button.color = gray
+					for button in buttons:
+						button.color = gray
 
 
 		if board.selected and key != None:
