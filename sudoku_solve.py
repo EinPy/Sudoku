@@ -8,10 +8,20 @@ grid = [[5,3,0,0,7,0,0,0,0],
 		[0,6,0,0,0,0,2,8,0],
 		[0,0,0,4,1,9,0,0,5],
 		[0,0,0,0,8,0,0,7,9]]
+		
+test = 	[[7, 6, 0, 0, 5, 0, 3, 0, 0], 
+		[0, 1, 0, 0, 0, 0, 0, 0, 0],
+		[0, 0, 0, 7, 0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0, 6, 0, 0, 0], 
+		[0, 0, 7, 0, 0, 8, 0, 5, 0],
+		[2, 0, 5, 0, 0, 0, 4, 9, 0],
+		[0, 8, 0, 4, 3, 9, 0, 0, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0, 0, 1, 0, 3]]
 
 def print_board(bo):
 	#for every third row print a long horizontal line
-	for i in range(len(bo)):
+	for i in range(9):
 		if i % 3 == 0 and i != 0:
 			print('- - - - - - - - - - - - - - - -')
 
@@ -25,6 +35,7 @@ def print_board(bo):
 				print(bo[i][j])
 			else:
 				print(f' {bo[i][j]} ', end = '')
+	print('\n')
 
 
 def possible(n,pos,bo):
@@ -35,17 +46,17 @@ def possible(n,pos,bo):
 	param bo: board
 	"""
 	y, x = pos
-	print(f'checking the position {pos}')
+#	print(f'checking the position {pos}')
 	#checking the row
-	print(f'checking num: {n}')
+#	print(f'checking num: {n}')
 	for i in range(len(bo)):
 		if bo[y][i] == n and x != i:
-			print(f'num: {n} didn\' work')
+#			print(f'num: {n} didn\' work')
 			return False
 	#checking the column for the number
 	for i in range(0,9):
 		if bo[i][x] == n and y != i:
-			print(f'num: {n} didn\' work')
+#			print(f'num: {n} didn\' work')
 			return False
 	#checking if the number exists in the same box
 	x_start = (x // 3) * 3
@@ -53,14 +64,14 @@ def possible(n,pos,bo):
 	for i in range(0,3):
 		for j in range(0,3):
 			if bo[y_start + i][x_start + j] == n and (y_start + i,x_start + j) != pos:
-				print(f'num: {n} didn\' work1')
+#				print(f'num: {n} didn\' work1')
 				return False
-	print(f'num: {n} did work')
+#	print(f'num: {n} did work')
 	return True  
 
 def find_empty(bo):
-	for i in range(len(bo)):
-		for j in range(len(bo[0])):
+	for i in range(9):
+		for j in range(9):
 			if bo[i][j] == 0:
 				return (i,j) #returns a tuple with (row, column)
 	return None #if there are no empty spaces
@@ -84,3 +95,8 @@ def solve(bo):
 			bo[row][col] = 0
 
 	return False
+
+
+if __name__ == "__main__":
+	solve(grid)
+	print_board(grid)
