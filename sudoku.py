@@ -45,7 +45,7 @@ class Grid:
 	def newGrid(self, diff):
 		self.grid = createValidGrid(diff)
 		for row in range(9):
-			for col in range(9):212
+			for col in range(9):
 				self.cubes[row][col].set_val(self.grid[row][col])
 		self.update_model()
 		self.create_solution()
