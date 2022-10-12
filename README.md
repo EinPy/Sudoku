@@ -10,6 +10,8 @@ a sudoku board created. In addition, it vizualises how a backtracking algorithm 
 to solve a sudoku board.
 
 Demo video:
+
+
 ![](https://github.com/EinPy/Sudoku/blob/master/VizualiseBacktracingGif.gif)
 
 ## Creating the grid ##
