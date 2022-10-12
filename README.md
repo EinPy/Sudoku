@@ -9,6 +9,9 @@ This project showcases how you can use algorithms to manipulate the difficulty o
 a sudoku board created. In addition, it vizualises how a backtracking algorithm works
 to solve a sudoku board.
 
+Demo video:
+![](https://github.com/EinPy/Sudoku/blob/master/VizualiseBacktracingGif.gif)
+
 ## Creating the grid ##
 This program use a quite brute force ish approach to create a brig. It first creates a possible configuration of a grid, 
 then subsequently tries to remove random indexes and checks if the board still only has one solution. 
